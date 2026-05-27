@@ -4,18 +4,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.tictactoe.datasource.mapper.GameDataMapper;
 import ru.tictactoe.datasource.repository.GameRepository;
+import ru.tictactoe.datasource.repository.UserRepository;
 import ru.tictactoe.domain.service.GameService;
 import ru.tictactoe.domain.service.GameServiceImpl;
 import ru.tictactoe.web.mapper.WebMapper;
 
 @Configuration
 public class GameConfig {
-
-//    @Bean
-//    public GameRepository gameRepository() {
-//        // класс хранилище singleton
-//        return new GameRepositoryImpl();
-//    }
 
     @Bean
     public GameDataMapper gameDataMapper() {
