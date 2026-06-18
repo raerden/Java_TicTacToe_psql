@@ -54,7 +54,7 @@ public class Controller {
     @GetMapping("/game")
     public GameDto createGame() {
         // создаем новую игру
-        System.out.println("Запрос на создание новой игры");
+//        System.out.println("Запрос на создание новой игры");
         Game game = gameService.createGame();
         return webMapper.toDTO(game);
     }

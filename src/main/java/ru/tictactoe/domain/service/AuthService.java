@@ -4,7 +4,6 @@ import ru.tictactoe.web.model.SignUpRequest;
 import java.util.UUID;
 
 public interface AuthService {
-
     /**
      * Регистрация нового пользователя
      * @param request логин и пароль
