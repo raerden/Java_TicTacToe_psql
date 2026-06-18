@@ -21,6 +21,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     // JDBC-драйвер для PostgreSQL
     runtimeOnly("org.postgresql:postgresql")
+    // Spring Security
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    // Для кодирования паролей (BCrypt) — уже внутри spring-boot-starter-security
 }
 
 tasks.test {

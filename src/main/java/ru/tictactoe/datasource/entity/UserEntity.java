@@ -14,7 +14,7 @@ public class UserEntity {
     private String login;
 
     @Column(nullable = false)
-    private String password;  // храним уже зашифрованным
+    private String password;
 
     public UserEntity() {}
 

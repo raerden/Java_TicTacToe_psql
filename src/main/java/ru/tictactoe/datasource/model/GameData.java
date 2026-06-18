@@ -9,7 +9,7 @@ import java.util.UUID;
 @Table(name = "games")  // ← имя таблицы в БД
 public class GameData {
     @Id  // ← говорит: это первичный ключ
-    @GeneratedValue(strategy = GenerationType.UUID)  // ← UUID генерируется автоматически
+    //@GeneratedValue(strategy = GenerationType.UUID)  // ← UUID генерируется автоматически
     private UUID id;// айди игры
 
     @Convert(converter = BoardDataConverter.class)  // ← добавляем конвертер
