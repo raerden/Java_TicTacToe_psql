@@ -1,9 +1,11 @@
 package ru.tictactoe.web.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.tictactoe.domain.model.Game;
+import ru.tictactoe.domain.model.GameStatus;
 import ru.tictactoe.domain.service.GameService;
 import ru.tictactoe.web.mapper.WebMapper;
 import ru.tictactoe.web.model.GameDto;
@@ -24,6 +26,49 @@ public class Controller {
         return "Крестики-нолики запущены!";
     }
 
+    @GetMapping("/game")
+    public GameDto createGame(HttpServletRequest request) {
+        UUID userId = (UUID) request.getAttribute("userId");
+        System.out.println("Пользователь " + userId + " создаёт игру");
+
+        // TODO: временно создаём игру с пустыми данными
+        // Позже здесь будет вызов gameService.createGame(userId, GameType.WITH_COMPUTER)
+
+        // Заглушка: создаём игру вручную для проверки маппера
+        Game game = new Game(
+                UUID.randomUUID(),
+                new ru.tictactoe.domain.model.Board(new int[3][3]),
+                userId,
+                null,  // player2Id — пока нет
+                userId, // currentPlayer — первый игрок начинает
+                'X',
+                'O',
+                null,  // winner — пока нет
+                GameStatus.WAITING_PLAYERS
+        );
+
+        return webMapper.toDTO(game);
+    }
+
+    //Вернуть состояние игры если такая сохранена
+    @GetMapping("/game/{id}")
+    public GameDto getGame(@PathVariable("id") UUID gameId) {
+        // TODO: переделать под новый Game
+        // Game game = gameService.getGame(gameId);
+        // return webMapper.toDTO(game);
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Метод временно отключён");
+    }
+
+    @PostMapping("/game/{id}")
+    public GameDto makeMoveRequest(
+            @PathVariable("id") UUID id,
+            @RequestBody GameDto gameDto
+    ) {
+        // TODO: переделать под новый Game
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Метод временно отключён");
+    }
+
+/*
     @PostMapping("/game/{id}")
     public GameDto makeMoveRequest(
             @PathVariable ("id") UUID id, // Spring сам сконвертирует строку в UUID
@@ -50,19 +95,5 @@ public class Controller {
         return webMapper.toDTO(updatedGame);
 
     }
-
-    @GetMapping("/game")
-    public GameDto createGame() {
-        // создаем новую игру
-//        System.out.println("Запрос на создание новой игры");
-        Game game = gameService.createGame();
-        return webMapper.toDTO(game);
-    }
-
-    //Вернуть состояние игры если такая сохранена
-    @GetMapping("/game/{id}")
-    public GameDto getGame(@PathVariable("id") UUID gameId) {
-        Game game = gameService.getGame(gameId);
-        return webMapper.toDTO(game);
-    }
+ */
 }

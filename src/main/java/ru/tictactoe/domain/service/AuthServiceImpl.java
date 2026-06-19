@@ -63,7 +63,7 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userOpt.get();
 
-        // 6. Проверяем пароль (пока без хеширования, простое сравнение)
+        // 6. Проверяем пароль
         if (!password.equals(user.getPassword())) {
             throw new RuntimeException("Invalid password");
         }

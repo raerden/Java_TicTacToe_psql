@@ -4,20 +4,30 @@ import java.util.UUID;
 
 public class Game {
     private UUID id;
-    private Board board;      // игровое поле 3x3
-    private int currentPlayer; // 1 - крестики (игрок), 2 - нолики (компьютер)
-    private int winner;        // 0 - нет победителя, 1 - игрок, 2 - компьютер
-    private boolean gameOver;
+    private UUID player1Id;
+    private UUID player2Id;      // может быть null, если игра с компьютером или ожидание
+    private char player1Symbol;   // 'X'
+    private char player2Symbol;   // 'O'
+    private Board board;
+    private UUID currentPlayer;   // UUID игрока, который сейчас ходит
+    private UUID winner;          // null — нет победителя
+    private GameStatus gameStatus;
 
     public Game() {
     }
 
-    public Game(UUID id, Board board, int currentPlayer, int winner, boolean gameOver) {
+    public Game(UUID id, Board board, UUID player1Id, UUID player2Id,
+                UUID currentPlayer, char player1Symbol, char player2Symbol,
+                UUID winner, GameStatus gameStatus) {
         this.id = id;
         this.board = board;
+        this.player1Id = player1Id;
+        this.player2Id = player2Id;
         this.currentPlayer = currentPlayer;
+        this.player1Symbol = player1Symbol;
+        this.player2Symbol = player2Symbol;
         this.winner = winner;
-        this.gameOver = gameOver;
+        this.gameStatus = gameStatus;
     }
 
     // Геттеры и сеттеры
@@ -27,25 +37,39 @@ public class Game {
     public Board getBoard() { return board; }
     public void setBoard(Board board) { this.board = board; }
 
-    public int getCurrentPlayer() { return currentPlayer; }
-    public void setCurrentPlayer(int currentPlayer) { this.currentPlayer = currentPlayer; }
+    public UUID getCurrentPlayer() { return currentPlayer; }
+    public void setCurrentPlayer(UUID currentPlayer) { this.currentPlayer = currentPlayer; }
 
-    public int getWinner() { return winner; }
-    public void setWinner(int winner) { this.winner = winner; }
+    public UUID getWinner() { return winner; }
+    public void setWinner(UUID winner) { this.winner = winner; }
 
-    public boolean isGameOver() { return gameOver; }
-    public void setGameOver(boolean gameOver) { this.gameOver = gameOver; }
+    public GameStatus getGameStatus() { return gameStatus; }
+    public void setGameStatus(GameStatus gameStatus) { this.gameStatus = gameStatus; }
 
+    public UUID getPlayer1Id() { return player1Id; }
+    public void setPlayer1Id(UUID player1Id) { this.player1Id = player1Id; }
+
+    public UUID getPlayer2Id() { return player2Id; }
+    public void setPlayer2Id(UUID player2Id) { this.player2Id = player2Id; }
+
+    public char getPlayer1Symbol() { return player1Symbol; }
+    public void setPlayer1Symbol(char player1Symbol) { this.player1Symbol = player1Symbol; }
+
+    public char getPlayer2Symbol() { return player2Symbol; }
+    public void setPlayer2Symbol(char player2Symbol) { this.player2Symbol = player2Symbol; }
+
+    // Метод для хода
     public void setMove(Move move) {
-        // Получаем текущую матрицу
         int[][] matrix = this.board.getMatrix();
 
-        // Проверяем, что клетка пуста (0)
         if (matrix[move.getRow()][move.getCol()] != 0) {
             throw new IllegalStateException("Клетка уже занята");
         }
 
-        // Ставим новый ход
         matrix[move.getRow()][move.getCol()] = move.getValue();
+    }
+
+    public boolean isGameOver() {
+        return gameStatus == GameStatus.DRAW || gameStatus == GameStatus.WINNER;
     }
 }

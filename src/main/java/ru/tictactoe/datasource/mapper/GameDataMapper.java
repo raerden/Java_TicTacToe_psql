@@ -15,9 +15,13 @@ public class GameDataMapper {
         return new GameData(
                 game.getId(),
                 boardData,
+                game.getPlayer1Id(),
+                game.getPlayer2Id(),
                 game.getCurrentPlayer(),
+                game.getPlayer1Symbol(),
+                game.getPlayer2Symbol(),
                 game.getWinner(),
-                game.isGameOver()
+                game.getGameStatus()
         );
     }
 
@@ -29,9 +33,13 @@ public class GameDataMapper {
         return new Game(
                 gameData.getId(),
                 board,
+                gameData.getPlayer1Id(),
+                gameData.getPlayer2Id(),
                 gameData.getCurrentPlayer(),
+                gameData.getPlayer1Symbol(),
+                gameData.getPlayer2Symbol(),
                 gameData.getWinner(),
-                gameData.isGameOver()
+                gameData.getGameStatus()
         );
     }
 }

@@ -31,8 +31,8 @@ public class AuthFilter extends GenericFilterBean {
             FilterChain chain
     ) throws IOException, ServletException {
 
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
+        HttpServletRequest httpRequest = (HttpServletRequest) request; // Информация о запросе
+        HttpServletResponse httpResponse = (HttpServletResponse) response; // для формирования ответа
 
         String path = httpRequest.getRequestURI();
 
