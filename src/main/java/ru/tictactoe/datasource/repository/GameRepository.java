@@ -10,4 +10,7 @@ import java.util.UUID;
 public interface GameRepository extends CrudRepository<GameData, UUID> {
     // Найти все игры с указанным статусом
     List<GameData> findAllByGameStatus(GameStatus status);
+
+    // Найти игры, где пользователь является player1 или player2
+    List<GameData> findAllByPlayer1IdOrPlayer2Id(UUID player1Id, UUID player2Id);
 }

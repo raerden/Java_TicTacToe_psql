@@ -62,6 +62,135 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    public List<Game> getGamesByPlayerId(UUID playerId) {
+        // Находим все игры, где пользователь player1 или player2
+        List<GameData> gamesData = gameRepository.findAllByPlayer1IdOrPlayer2Id(playerId, playerId);
+
+        // Преобразуем в доменные объекты
+        return gamesData.stream()
+                .map(gameDataMapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Game joinGame(UUID gameId, UUID player2Id) {
+        // 1. Загружаем игру
+        GameData gameData = gameRepository.findById(gameId)
+                .orElseThrow(() -> new GameNotFoundException(gameId));
+
+        // 2. Проверяем, что игра ждёт игроков
+        if (gameData.getGameStatus() != GameStatus.WAITING_PLAYERS) {
+            throw new IllegalStateException("Игра уже начата или завершена");
+        }
+
+        // 3. Проверяем, что второй игрок не равен первому
+        if (gameData.getPlayer1Id().equals(player2Id)) {
+            throw new IllegalStateException("Вы не можете присоединиться к своей собственной игре");
+        }
+
+        // 4. Обновляем игру
+        gameData.setPlayer2Id(player2Id);
+        gameData.setGameStatus(GameStatus.IN_PROGRESS);
+        // currentPlayer остаётся player1Id (первый игрок начинает)
+
+        // 5. Сохраняем
+        GameData updatedGameData = gameRepository.save(gameData);
+
+        // 6. Возвращаем доменную модель
+        return gameDataMapper.toDomain(updatedGameData);
+    }
+
+
+    @Override
+    public Game makeMove(UUID gameId, Game gameFromClient, UUID playerId) {
+        // 1. Загружаем актуальную игру из БД
+        GameData gameData = gameRepository.findById(gameId)
+                .orElseThrow(() -> new GameNotFoundException(gameId));
+
+        Game savedGame = gameDataMapper.toDomain(gameData);
+
+        // 2. Проверяем, что игра активна
+        if (savedGame.getGameStatus() != GameStatus.IN_PROGRESS) {
+            throw new IllegalStateException("Игра не активна");
+        }
+
+        // 3. Проверяем, что ходит правильный игрок
+        if (!savedGame.getCurrentPlayer().equals(playerId)) {
+            throw new IllegalStateException("Сейчас не ваш ход");
+        }
+
+        // 4. Валидируем состояние доски (через существующий метод)
+        if (!validateGameState(gameId, gameFromClient)) {
+            throw new IllegalStateException("Невалидное состояние игры");
+        }
+
+        // 5. Применяем ход игрока
+        // Находим, какая клетка изменилась
+        int[][] savedMatrix = savedGame.getBoard().getMatrix();
+        int[][] proposedMatrix = gameFromClient.getBoard().getMatrix();
+
+        int row = -1, col = -1;
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (savedMatrix[i][j] != proposedMatrix[i][j]) {
+                    row = i;
+                    col = j;
+                    break;
+                }
+            }
+            if (row != -1) break;
+        }
+
+        // Применяем ход к сохранённой игре
+        Move move = new Move(row, col,
+                playerId.equals(savedGame.getPlayer1Id()) ?
+                        (savedGame.getPlayer1Symbol() == 'X' ? ZeroCross.CROSS : ZeroCross.ZERO) :
+                        (savedGame.getPlayer2Symbol() == 'X' ? ZeroCross.CROSS : ZeroCross.ZERO)
+        );
+        savedGame.setMove(move);
+
+        // 6. Проверяем победу
+        int winnerValue = checkWinner(savedGame.getBoard().getMatrix());
+        if (winnerValue != 0) {
+            // Кто победил?
+            UUID winnerId = null;
+            if (winnerValue == 1) { // X
+                winnerId = savedGame.getPlayer1Symbol() == 'X' ?
+                        savedGame.getPlayer1Id() : savedGame.getPlayer2Id();
+            } else { // O
+                winnerId = savedGame.getPlayer1Symbol() == 'O' ?
+                        savedGame.getPlayer1Id() : savedGame.getPlayer2Id();
+            }
+
+            savedGame.setWinner(winnerId);
+            savedGame.setGameStatus(GameStatus.WINNER);
+
+            // Сохраняем и возвращаем
+            gameRepository.save(gameDataMapper.toData(savedGame));
+            return savedGame;
+        }
+
+        // 7. Проверяем ничью
+        if (isBoardFull(savedGame.getBoard().getMatrix())) {
+            savedGame.setGameStatus(GameStatus.DRAW);
+            savedGame.setWinner(null);
+
+            gameRepository.save(gameDataMapper.toData(savedGame));
+            return savedGame;
+        }
+
+        // 8. Передаём ход другому игроку
+        UUID nextPlayer = savedGame.getCurrentPlayer().equals(savedGame.getPlayer1Id()) ?
+                savedGame.getPlayer2Id() : savedGame.getPlayer1Id();
+        savedGame.setCurrentPlayer(nextPlayer);
+
+        // 9. Сохраняем
+        gameRepository.save(gameDataMapper.toData(savedGame));
+
+        return savedGame;
+    }
+
+    @Override
     public boolean validateGameState(UUID gameId, Game proposedGame) {
         //Загружаем сохраненную иргу
         Game savedGame = getGame(gameId);
@@ -98,14 +227,33 @@ public class GameServiceImpl implements GameService {
             throw new ValidateGameException("Изменены более одной клетки!");
         }
 
-        // Измененная клетка была пустой
+        // Измененная клетка была не пустой
         if (savedMatrix[changedRow][changedCol] != 0) {
             throw new ValidateGameException("Данная клетка занята!");
         }
 
-        // Игрок поставил крестик (1)
-        if (proposedMatrix[changedRow][changedCol] != 1) {
-            throw new ValidateGameException("Игрок прислал не 1 (крестик)!");
+        // Определяем, какой символ должен поставить игрок
+        int expectedSymbol;
+        UUID currentPlayerId = savedGame.getCurrentPlayer();
+
+        if (currentPlayerId.equals(savedGame.getPlayer1Id())) {
+            // Ходит первый игрок — его символ
+            expectedSymbol = savedGame.getPlayer1Symbol() == 'X' ? 1 : 2;
+        } else if (currentPlayerId.equals(savedGame.getPlayer2Id())) {
+            // Ходит второй игрок — его символ
+            expectedSymbol = savedGame.getPlayer2Symbol() == 'X' ? 1 : 2;
+        } else {
+            throw new ValidateGameException("Неизвестный игрок");
+        }
+
+        // Проверяем, что игрок поставил правильный символ
+        int placedSymbol = proposedMatrix[changedRow][changedCol];
+        if (placedSymbol != expectedSymbol) {
+            throw new ValidateGameException(
+                    "Игрок должен поставить " +
+                            (expectedSymbol == 1 ? "X (1)" : "O (2)") +
+                            ", а поставил " + placedSymbol
+            );
         }
 
         return true;

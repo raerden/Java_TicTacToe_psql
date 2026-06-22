@@ -56,13 +56,53 @@ public class Controller {
                 .collect(Collectors.toList());
     }
 
+    // Получить все игры текущего пользователя (любой статус)
+    @GetMapping("/game/my")
+    public List<GameDto> getMyGames(HttpServletRequest request) {
+        UUID userId = (UUID) request.getAttribute("userId");
+        List<Game> games = gameService.getGamesByPlayerId(userId);
+
+        return games.stream()
+                .map(webMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/game/join/{id}")
+    public GameDto joinGame(
+            @PathVariable("id") UUID gameId,
+            HttpServletRequest request
+    ) {
+        // Получаем ID текущего пользователя из AuthFilter
+        UUID player2Id = (UUID) request.getAttribute("userId");
+
+        // Присоединяемся к игре
+        Game updatedGame = gameService.joinGame(gameId, player2Id);
+
+        return webMapper.toDTO(updatedGame);
+    }
+
     @PostMapping("/game/{id}")
     public GameDto makeMoveRequest(
-            @PathVariable("id") UUID id,
-            @RequestBody GameDto gameDto
+            @PathVariable("id") UUID gameId,
+            @RequestBody GameDto gameDto,
+            HttpServletRequest request
     ) {
-        // TODO: переделать под новый Game
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Метод временно отключён");
+        // 1. Получаем ID текущего пользователя
+        UUID playerId = (UUID) request.getAttribute("userId");
+
+        // 2. Проверяем, что ID в пути и в теле совпадают
+        if (gameDto.getId() == null || !gameId.equals(gameDto.getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID mismatch");
+        }
+
+        // 3. Конвертируем DTO в доменную модель
+        Game proposedGame = webMapper.toDomain(gameDto);
+
+        // 4. Делаем ход
+        Game updatedGame = gameService.makeMove(gameId, proposedGame, playerId);
+
+        // 5. Возвращаем обновлённое состояние
+        return webMapper.toDTO(updatedGame);
     }
 
 /*

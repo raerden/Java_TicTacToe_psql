@@ -9,6 +9,9 @@ public interface GameService {
     Game createGame(UUID player1Id, char player1Symbol);
     Game getGame(UUID id);
     List<Game> getAvailableGames();
+    List<Game> getGamesByPlayerId(UUID playerId);
+    Game joinGame(UUID gameId, UUID player2Id);
+    Game makeMove(UUID gameId, Game gameFromClient, UUID playerId);
     Game makeComputerMove(Game game);
     boolean validateGameState(UUID gameId, Game proposedGame);
 }
