@@ -4,13 +4,12 @@ import ru.tictactoe.datasource.mapper.GameDataMapper;
 import ru.tictactoe.datasource.model.GameData;
 import ru.tictactoe.datasource.repository.GameRepository;
 import ru.tictactoe.domain.exception.ValidateGameException;
-import ru.tictactoe.domain.model.Board;
-import ru.tictactoe.domain.model.Game;
+import ru.tictactoe.domain.model.*;
 import ru.tictactoe.domain.exception.GameNotFoundException;
-import ru.tictactoe.domain.model.Move;
-import ru.tictactoe.domain.model.ZeroCross;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class GameServiceImpl implements GameService {
     private final GameRepository gameRepository;
@@ -24,14 +23,18 @@ public class GameServiceImpl implements GameService {
         this.gameDataMapper = gameDataMapper;
     }
 
-    public Game createGame() {
+    public Game createGame(UUID player1Id, char player1Symbol) {
         // Новая игра: пустая доска, ход игрока (1), нет победителя, игра не окончена
         Game game = new Game(
                 UUID.randomUUID(),
                 new Board(new int[3][3]),
-                1,      // currentPlayer = 1 (игрок начинает)
-                0,      // 0 - ничья, 1 - победил игрок, 2 - победил комп
-                false   // gameOver = false
+                player1Id,
+                null,  //
+                player1Id, // currentPlayer первый игрок начинает
+                player1Symbol,
+                player1Symbol == 'X' ? 'O' : 'X',
+                null,  // winner — пока нет
+                GameStatus.WAITING_PLAYERS
         );
 
         GameData gameData = gameDataMapper.toData(game);
@@ -41,14 +44,21 @@ public class GameServiceImpl implements GameService {
     }
 
     public Game getGame(UUID id) {
-        // Загружаем через репозиторий
         GameData gameData = gameRepository.findById(id)
                 .orElseThrow(() -> new GameNotFoundException(id));
-//        if (gameData == null) {
-//            throw new GameNotFoundException(id);
-//        }
-        // Конвертируем обратно в доменную модель
+
         return gameDataMapper.toDomain(gameData);
+    }
+
+    @Override
+    public List<Game> getAvailableGames() {
+        // Находим все игры со статусом WAITING_PLAYERS
+        List<GameData> gamesData = gameRepository.findAllByGameStatus(GameStatus.WAITING_PLAYERS);
+
+        // Преобразуем в доменные объекты
+        return gamesData.stream()
+                .map(gameDataMapper::toDomain)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -109,7 +119,7 @@ public class GameServiceImpl implements GameService {
         if (game.isGameOver()) {
             throw new IllegalStateException("Game is already over");
         }
-
+/*
         // Проверяем победу игрока приславшего поле со своим ходом
         int winner = checkWinner(game.getBoard().getMatrix());
         if (winner != EMPTY) {
@@ -149,7 +159,7 @@ public class GameServiceImpl implements GameService {
 
         // Если игра не закончена, меняем игрока. Кто сделал текущий ход
         game.setCurrentPlayer(currentPlayer);
-
+*/
         // Сохраняем новое состояние игры
         gameRepository.save(gameDataMapper.toData(game));
 
