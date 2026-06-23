@@ -13,7 +13,6 @@ import ru.tictactoe.web.model.GameDto;
 import ru.tictactoe.web.model.UserDto;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -34,13 +33,18 @@ public class Controller {
         return "Крестики-нолики запущены!";
     }
 
+    // Создание игры с выбором символа /game?symbol=X
     @GetMapping("/game")
     public GameDto createGame(
             HttpServletRequest request,
-            @RequestParam(defaultValue = "X") char symbol
+            @RequestParam(defaultValue = "X") char symbol,
+            @RequestParam(defaultValue = "false") boolean singlePlayer
     ) {
+        symbol = Character.toUpperCase(symbol);
+        if (symbol != 'X' && symbol != 'O') symbol = 'X';
+
         UUID userId = (UUID) request.getAttribute("userId");
-        Game game = gameService.createGame(userId, symbol);
+        Game game = gameService.createGame(userId, symbol, singlePlayer);
         return webMapper.toDTO(game);
     }
 
