@@ -8,6 +8,7 @@ import java.util.UUID;
 public interface UserRepository extends CrudRepository<UserEntity, UUID> {
     Optional<UserEntity> findByLogin(String login); //Спринг сгенерирует запрос в БД "SELECT * FROM users WHERE login = "
     boolean existsByLogin(String login); // Генерирует SELECT COUNT(*) FROM users WHERE login = ? (и возвращает true если > 0)
+    //Optional<UserEntity> findById(UUID id);
 }
 
 /*

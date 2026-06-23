@@ -3,8 +3,12 @@ package ru.tictactoe.web.mapper;
 import org.springframework.stereotype.Component;
 import ru.tictactoe.domain.model.Board;
 import ru.tictactoe.domain.model.Game;
+import ru.tictactoe.domain.model.User;
 import ru.tictactoe.web.model.BoardDto;
 import ru.tictactoe.web.model.GameDto;
+import ru.tictactoe.web.model.UserDto;
+
+import java.util.Optional;
 
 @Component
 public class WebMapper {
@@ -44,4 +48,15 @@ public class WebMapper {
                 dto.getGameStatus()
         );
     }
+
+    public UserDto userToDto(User user) {
+        if (user == null) {
+            return null;
+        }
+        return new UserDto(
+                user.getId(),
+                user.getLogin()
+        );
+    }
+
 }

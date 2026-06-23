@@ -5,22 +5,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.tictactoe.domain.model.Game;
-import ru.tictactoe.domain.model.GameStatus;
+import ru.tictactoe.domain.model.User;
 import ru.tictactoe.domain.service.GameService;
+import ru.tictactoe.domain.service.UserService;
 import ru.tictactoe.web.mapper.WebMapper;
 import ru.tictactoe.web.model.GameDto;
+import ru.tictactoe.web.model.UserDto;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController // Аннотация говорит Spring, что этот класс будет обрабатывать HTTP запросы и возвращать данные (не HTML страницы)
 public class Controller {
     private final GameService gameService;
+    private final UserService userService;
     private final WebMapper webMapper;
 
-    public Controller(GameService gameService, WebMapper webMapper) {
+    public Controller(GameService gameService, UserService userService,  WebMapper webMapper) {
         this.gameService = gameService;
+        this.userService = userService;
         this.webMapper = webMapper;
     }
 
@@ -44,6 +49,18 @@ public class Controller {
     public GameDto getGame(@PathVariable("id") UUID gameId) {
         Game game = gameService.getGame(gameId);
         return webMapper.toDTO(game);
+    }
+
+    // endpoint для получения информации о пользователе по UUID.
+    @GetMapping("/user/{id}")
+    public UserDto getUser(@PathVariable("id") UUID userId) {
+        User user = userService.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Пользователь с ID " + userId + " не найден"
+                ));
+
+        return webMapper.userToDto(user);
     }
 
     //Добавь endpoint для получения доступных текущих игр. Статус: WAITING_PLAYERS
