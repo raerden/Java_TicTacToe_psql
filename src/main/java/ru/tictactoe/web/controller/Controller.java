@@ -126,32 +126,4 @@ public class Controller {
         return webMapper.toDTO(updatedGame);
     }
 
-/*
-    @PostMapping("/game/{id}")
-    public GameDto makeMoveRequest(
-            @PathVariable ("id") UUID id, // Spring сам сконвертирует строку в UUID
-            @RequestBody GameDto gameDto  // Spring сам распарсит JSON в объект
-    ) {
-
-        // Проверка ID
-        if (gameDto.getId() == null || !id.equals(gameDto.getId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID mismatch");
-        }
-
-        // Конвертируем DTO в доменную модель
-        Game proposedGame = webMapper.toDomain(gameDto);
-
-        // Валидация сохраненной игры с присланным состоянием
-        if (!gameService.validateGameState(id, proposedGame)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid game state");
-        }
-
-        // Делаем ход компьютера (и проверяем победу)
-        Game updatedGame = gameService.makeComputerMove(proposedGame);
-
-        // Возвращаем клиенту через мапперDTO
-        return webMapper.toDTO(updatedGame);
-
-    }
- */
 }

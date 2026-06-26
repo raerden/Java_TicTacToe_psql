@@ -3,6 +3,7 @@ package ru.tictactoe.datasource.model;
 import jakarta.persistence.*;
 import ru.tictactoe.datasource.converter.BoardDataConverter;
 import ru.tictactoe.domain.model.GameStatus;
+import ru.tictactoe.domain.model.ZeroCross;
 
 import java.util.UUID;
 
@@ -71,10 +72,10 @@ public class GameData {
     public UUID getCurrentPlayer() { return currentPlayer; }
     public void setCurrentPlayer(UUID currentPlayer) { this.currentPlayer = currentPlayer; }
 
-    public char getPlayer1Symbol() { return player1Symbol; }
+    public ZeroCross getPlayer1Symbol() { return ZeroCross.fromSymbol(player1Symbol); }
     public void setPlayer1Symbol(char player1Symbol) { this.player1Symbol = player1Symbol; }
 
-    public char getPlayer2Symbol() { return player2Symbol; }
+    public ZeroCross getPlayer2Symbol() { return ZeroCross.fromSymbol(player2Symbol); }
     public void setPlayer2Symbol(char player2Symbol) { this.player2Symbol = player2Symbol; }
 
     public UUID getWinner() { return winner; }

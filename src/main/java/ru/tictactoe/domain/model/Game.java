@@ -6,8 +6,8 @@ public class Game {
     private UUID id;
     private UUID player1Id;
     private UUID player2Id;      // может быть null, если игра с компьютером или ожидание
-    private char player1Symbol;   // 'X'
-    private char player2Symbol;   // 'O'
+    private ZeroCross player1Symbol;   // 'X'
+    private ZeroCross player2Symbol;   // 'O'
     private Board board;
     private UUID currentPlayer;   // UUID игрока, который сейчас ходит
     private UUID winner;          // null — нет победителя
@@ -17,7 +17,7 @@ public class Game {
     }
 
     public Game(UUID id, Board board, UUID player1Id, UUID player2Id,
-                UUID currentPlayer, char player1Symbol, char player2Symbol,
+                UUID currentPlayer, ZeroCross player1Symbol, ZeroCross player2Symbol,
                 UUID winner, GameStatus gameStatus) {
         this.id = id;
         this.board = board;
@@ -52,11 +52,11 @@ public class Game {
     public UUID getPlayer2Id() { return player2Id; }
     public void setPlayer2Id(UUID player2Id) { this.player2Id = player2Id; }
 
-    public char getPlayer1Symbol() { return player1Symbol; }
-    public void setPlayer1Symbol(char player1Symbol) { this.player1Symbol = player1Symbol; }
+    public ZeroCross getPlayer1Symbol() { return player1Symbol; }
+    public void setPlayer1Symbol(ZeroCross player1Symbol) { this.player1Symbol = player1Symbol; }
 
-    public char getPlayer2Symbol() { return player2Symbol; }
-    public void setPlayer2Symbol(char player2Symbol) { this.player2Symbol = player2Symbol; }
+    public ZeroCross getPlayer2Symbol() { return player2Symbol; }
+    public void setPlayer2Symbol(ZeroCross player2Symbol) { this.player2Symbol = player2Symbol; }
 
     // Метод для хода
     public void setMove(Move move) {

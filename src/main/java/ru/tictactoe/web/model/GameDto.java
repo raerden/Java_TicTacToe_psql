@@ -1,6 +1,7 @@
 package ru.tictactoe.web.model;
 
 import ru.tictactoe.domain.model.GameStatus;
+import ru.tictactoe.domain.model.ZeroCross;
 
 import java.util.UUID;
 
@@ -9,8 +10,8 @@ public class GameDto {
     private BoardDto board;
     private UUID player1Id;
     private UUID player2Id;
-    private char player1Symbol;
-    private char player2Symbol;
+    private ZeroCross player1Symbol;
+    private ZeroCross player2Symbol;
     private UUID currentPlayer;
     private UUID winner;
     private GameStatus gameStatus;
@@ -19,7 +20,7 @@ public class GameDto {
     }
 
     public GameDto(UUID id, BoardDto board, UUID player1Id, UUID player2Id,
-                   char player1Symbol, char player2Symbol,
+                   ZeroCross player1Symbol, ZeroCross player2Symbol,
                    UUID currentPlayer, UUID winner, GameStatus gameStatus) {
         this.id = id;
         this.board = board;
@@ -45,11 +46,11 @@ public class GameDto {
     public UUID getPlayer2Id() { return player2Id; }
     public void setPlayer2Id(UUID player2Id) { this.player2Id = player2Id; }
 
-    public char getPlayer1Symbol() { return player1Symbol; }
-    public void setPlayer1Symbol(char player1Symbol) { this.player1Symbol = player1Symbol; }
+    public ZeroCross getPlayer1Symbol() { return player1Symbol; }
+    public void setPlayer1Symbol(ZeroCross player1Symbol) { this.player1Symbol = player1Symbol; }
 
-    public char getPlayer2Symbol() { return player2Symbol; }
-    public void setPlayer2Symbol(char player2Symbol) { this.player2Symbol = player2Symbol; }
+    public ZeroCross getPlayer2Symbol() { return player2Symbol; }
+    public void setPlayer2Symbol(ZeroCross player2Symbol) { this.player2Symbol = player2Symbol; }
 
     public UUID getCurrentPlayer() { return currentPlayer; }
     public void setCurrentPlayer(UUID currentPlayer) { this.currentPlayer = currentPlayer; }

@@ -22,9 +22,13 @@ public class GameServiceImpl implements GameService {
         this.gameDataMapper = gameDataMapper;
     }
 
-    public Game createGame(UUID player1Id, char player1Symbol, boolean isSingleGame) {
+    public Game createGame(UUID player1Id, char symbol, boolean isSingleGame) {
         GameStatus initialStatus = isSingleGame ? GameStatus.IN_PROGRESS : GameStatus.WAITING_PLAYERS;
         UUID player2Id = isSingleGame ? COMPUTER_UUID : null;
+
+        ZeroCross player1Symbol = ZeroCross.fromSymbol(symbol);
+        ZeroCross player2Symbol = ZeroCross.invert(player1Symbol);
+
         // Новая игра: пустая доска, ход игрока (1), нет победителя, игра не окончена
         Game game = new Game(
                 UUID.randomUUID(),
@@ -33,7 +37,7 @@ public class GameServiceImpl implements GameService {
                 player2Id, // null - если игра на двоих. Иначе айди для компьютера
                 player1Id, // currentPlayer первый игрок начинает
                 player1Symbol,
-                player1Symbol == 'X' ? 'O' : 'X',
+                player2Symbol,
                 null,  // winner — пока нет
                 initialStatus
         );
@@ -148,11 +152,16 @@ public class GameServiceImpl implements GameService {
         }
 
         // Применяем ход к сохранённой игре
+//        Move move = new Move(row, col,
+//                playerId.equals(savedGame.getPlayer1Id()) ?
+//                        (savedGame.getPlayer1Symbol() == 'X' ? ZeroCross.CROSS : ZeroCross.ZERO) :
+//                        (savedGame.getPlayer2Symbol() == 'X' ? ZeroCross.CROSS : ZeroCross.ZERO)
+//        );
         Move move = new Move(row, col,
                 playerId.equals(savedGame.getPlayer1Id()) ?
-                        (savedGame.getPlayer1Symbol() == 'X' ? ZeroCross.CROSS : ZeroCross.ZERO) :
-                        (savedGame.getPlayer2Symbol() == 'X' ? ZeroCross.CROSS : ZeroCross.ZERO)
+                        savedGame.getPlayer1Symbol() : savedGame.getPlayer2Symbol()
         );
+
         savedGame.setMove(move);
 
 
@@ -197,16 +206,17 @@ public class GameServiceImpl implements GameService {
      * @return true если игра завершена (победа или ничья)
      */
     private boolean checkGameOver(Game game) {
+        // вернет 1 или 2 в случае победителя
         int winnerValue = checkWinner(game.getBoard().getMatrix());
 
         if (winnerValue != 0) {
             // Кто победил?
             UUID winnerId = null;
             if (winnerValue == 1) { // X
-                winnerId = game.getPlayer1Symbol() == 'X' ?
+                winnerId = game.getPlayer1Symbol() == ZeroCross.CROSS ?
                         game.getPlayer1Id() : game.getPlayer2Id();
             } else { // O
-                winnerId = game.getPlayer1Symbol() == 'O' ?
+                winnerId = game.getPlayer1Symbol() == ZeroCross.ZERO ?
                         game.getPlayer1Id() : game.getPlayer2Id();
             }
 
@@ -267,26 +277,29 @@ public class GameServiceImpl implements GameService {
         }
 
         // Определяем, какой символ должен поставить игрок
-        int expectedSymbol;
+        ZeroCross expectedSymbol;
         UUID currentPlayerId = savedGame.getCurrentPlayer();
 
         if (currentPlayerId.equals(savedGame.getPlayer1Id())) {
             // Ходит первый игрок — его символ
-            expectedSymbol = savedGame.getPlayer1Symbol() == 'X' ? 1 : 2;
+            expectedSymbol = savedGame.getPlayer1Symbol();
         } else if (currentPlayerId.equals(savedGame.getPlayer2Id())) {
             // Ходит второй игрок — его символ
-            expectedSymbol = savedGame.getPlayer2Symbol() == 'X' ? 1 : 2;
+            expectedSymbol = savedGame.getPlayer2Symbol();
         } else {
             throw new ValidateGameException("Неизвестный игрок");
         }
 
         // Проверяем, что игрок поставил правильный символ
-        int placedSymbol = proposedMatrix[changedRow][changedCol];
+        ZeroCross placedSymbol = ZeroCross.fromValue(proposedMatrix[changedRow][changedCol]);
+        if (placedSymbol == null) {
+            throw new ValidateGameException("Неизвестный символ");
+        }
         if (placedSymbol != expectedSymbol) {
             throw new ValidateGameException(
                     "Игрок должен поставить " +
-                            (expectedSymbol == 1 ? "X (1)" : "O (2)") +
-                            ", а поставил " + placedSymbol
+                            (expectedSymbol == ZeroCross.CROSS ? "X (1)" : "O (2)") +
+                            ", а поставил " + placedSymbol.getSymbol()
             );
         }
 
@@ -298,28 +311,29 @@ public class GameServiceImpl implements GameService {
         int[][] board = game.getBoard().getMatrix();
 
         // Берем значение компьютера (второго игрока)
-        int computerValue = getPlayerValue(game, game.getPlayer2Id());
+        int computerValue = game.getPlayer2Symbol().getValue();
 
-        int bestScore = Integer.MIN_VALUE;
+        // Компьютер ищет МИНИМУМ (потому что он минимизирует в minimax)
+        int bestScore = Integer.MAX_VALUE;
         Move bestMove = null;
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (board[i][j] == EMPTY) {
-                    board[i][j] = computerValue;  // ← компьютер ставит своё значение
+                    board[i][j] = computerValue;
 
                     if (checkWinner(board) == computerValue) {
                         board[i][j] = EMPTY;
                         return new Move(i, j, computerValue == 1 ? ZeroCross.CROSS : ZeroCross.ZERO);
                     }
 
-                    // Передаём в минимакс противоположного игрока (человека)
                     int nextPlayerValue = getOpponentValue(computerValue);
                     int score = minimax(board, 0, nextPlayerValue, game);
 
                     board[i][j] = EMPTY;
 
-                    if (score > bestScore) {
+                    // Ищем МИНИМАЛЬНЫЙ score
+                    if (score < bestScore) {
                         bestScore = score;
                         bestMove = new Move(i, j, computerValue == 1 ? ZeroCross.CROSS : ZeroCross.ZERO);
                     }
@@ -330,15 +344,6 @@ public class GameServiceImpl implements GameService {
         return bestMove;
     }
 
-    //вернет 1 или 2 в зависимости от символа игрока
-    private int getPlayerValue(Game game, UUID playerId) {
-        if (playerId.equals(game.getPlayer1Id())) {
-            return game.getPlayer1Symbol() == 'X' ? 1 : 2;
-        }
-        // Иначе это компьютер (второй игрок)
-        return game.getPlayer2Symbol() == 'X' ? 1 : 2;
-    }
-
     private int getOpponentValue(int playerValue) {
         return playerValue == 1 ? 2 : 1;
     }
@@ -347,20 +352,21 @@ public class GameServiceImpl implements GameService {
         int winner = checkWinner(board);
 
         if (winner != EMPTY) {
-            int player1Value = game.getPlayer1Symbol() == 'X' ? 1 : 2;
+            int player1Value = game.getPlayer1Symbol().getValue();
+
             if (winner == player1Value) {
-                return -10 + depth;  // победил первый игрок (человек)
+                return 10 - depth;   // победа человека → положительное (плохо для компьютера)
             } else {
-                return 10 - depth;   // победил компьютер
+                return -10 + depth;  // победа компьютера → отрицательное (хорошо для компьютера)
             }
         }
 
         if (isBoardFull(board)) return 0;
 
-        int player1Value = game.getPlayer1Symbol() == 'X' ? 1 : 2;
+        int player1Value = game.getPlayer1Symbol().getValue();
 
         if (playerValue == player1Value) {
-            // Ход первого игрока (максимизация)
+            // Человек максимизирует
             int bestScore = Integer.MIN_VALUE;
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
@@ -374,7 +380,7 @@ public class GameServiceImpl implements GameService {
             }
             return bestScore;
         } else {
-            // Ход компьютера (минимизация)
+            // Компьютер минимизирует
             int bestScore = Integer.MAX_VALUE;
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {

@@ -18,8 +18,8 @@ public class GameDataMapper {
                 game.getPlayer1Id(),
                 game.getPlayer2Id(),
                 game.getCurrentPlayer(),
-                game.getPlayer1Symbol(),
-                game.getPlayer2Symbol(),
+                game.getPlayer1Symbol().getSymbol(),
+                game.getPlayer2Symbol().getSymbol(),
                 game.getWinner(),
                 game.getGameStatus()
         );
